@@ -192,6 +192,34 @@ export function restoreTasks(entries = []) {
   commit();
 }
 
+export function moveTask(draggedId, targetId, { after = false } = {}) {
+  if (draggedId === targetId) {
+    return false;
+  }
+
+  const draggedTask = tasks.find((task) => task.id === draggedId);
+  if (!draggedTask) {
+    return false;
+  }
+
+  const rest = tasks.filter((task) => task.id !== draggedId);
+  const targetIndex = rest.findIndex((task) => task.id === targetId);
+  if (targetIndex === -1) {
+    return false;
+  }
+
+  const next = [...rest];
+  next.splice(targetIndex + (after ? 1 : 0), 0, draggedTask);
+
+  if (next.every((task, index) => task.id === tasks[index].id)) {
+    return false;
+  }
+
+  tasks = next;
+  commit();
+  return true;
+}
+
 export function updateTask(id, { title, dueDate = null }) {
   const nextTitle = title.trim().slice(0, 140);
   if (!nextTitle) {

@@ -2,7 +2,10 @@ import { el } from '../dom.js';
 import { createIcon } from '../icons.js';
 import { formatFullDate, formatDueDate, isOverdue } from '../utils/date.js';
 
-export function createTaskItem(task, { onToggle, onEdit, onDelete }) {
+export function createTaskItem(
+  task,
+  { onToggle, onEdit, onDelete, onMove, reorderable = false },
+) {
   const checkbox = el('input', {
     className: 'task__checkbox',
     type: 'checkbox',
@@ -112,6 +115,22 @@ export function createTaskItem(task, { onToggle, onEdit, onDelete }) {
     onDelete(task.id);
   });
 
+  const dragHandle = reorderable
+    ? el(
+        'button',
+        {
+          className: 'task__action task__drag',
+          type: 'button',
+          draggable: true,
+          attrs: {
+            'aria-label': `Переместить задачу «${task.title}»`,
+            title: 'Перетащить',
+          },
+        },
+        createIcon('grip', { size: 17 }),
+      )
+    : null;
+
   const element = el(
     'li',
     {
@@ -125,7 +144,7 @@ export function createTaskItem(task, { onToggle, onEdit, onDelete }) {
       el('p', { className: 'task__title', text: task.title }),
       meta,
     ),
-    el('div', { className: 'task__actions' }, editButton, deleteButton),
+    el('div', { className: 'task__actions' }, dragHandle, editButton, deleteButton),
     editForm,
   );
 
@@ -185,6 +204,56 @@ export function createTaskItem(task, { onToggle, onEdit, onDelete }) {
       dueDate: dateInput.value || null,
     });
   });
+
+  if (dragHandle) {
+    function clearDropIndicator() {
+      element.classList.remove('task--drop-before', 'task--drop-after');
+    }
+
+    dragHandle.addEventListener('dragstart', (event) => {
+      event.dataTransfer.effectAllowed = 'move';
+      event.dataTransfer.setData('text/plain', task.id);
+      element.classList.add('is-dragging');
+    });
+
+    dragHandle.addEventListener('dragend', () => {
+      element.classList.remove('is-dragging');
+      clearDropIndicator();
+    });
+
+    element.addEventListener('dragover', (event) => {
+      if (element.classList.contains('is-dragging')) {
+        return;
+      }
+
+      event.preventDefault();
+      event.dataTransfer.dropEffect = 'move';
+
+      const rect = element.getBoundingClientRect();
+      const after = event.clientY > rect.top + rect.height / 2;
+
+      element.classList.toggle('task--drop-before', !after);
+      element.classList.toggle('task--drop-after', after);
+    });
+
+    element.addEventListener('dragleave', (event) => {
+      if (!element.contains(event.relatedTarget)) {
+        clearDropIndicator();
+      }
+    });
+
+    element.addEventListener('drop', (event) => {
+      event.preventDefault();
+
+      const draggedId = event.dataTransfer.getData('text/plain');
+      const after = element.classList.contains('task--drop-after');
+      clearDropIndicator();
+
+      if (draggedId && draggedId !== task.id) {
+        onMove(draggedId, task.id, { after });
+      }
+    });
+  }
 
   return element;
 }

@@ -3,7 +3,7 @@ import { createIcon } from '../icons.js';
 import { createTaskItem } from './task-item.js';
 import { createToolbar } from './toolbar.js';
 
-export function createTaskList({ onToggle, onEdit, onDelete } = {}) {
+export function createTaskList({ onToggle, onEdit, onDelete, onMove } = {}) {
   const toolbar = createToolbar();
 
   const countBadge = el('span', {
@@ -84,11 +84,13 @@ export function createTaskList({ onToggle, onEdit, onDelete } = {}) {
     body,
   );
 
-  function render(visibleTasks, allTasks = visibleTasks) {
+  function render(visibleTasks, allTasks = visibleTasks, { reorderable = false } = {}) {
     clear(list);
     append(
       list,
-      visibleTasks.map((task) => createTaskItem(task, { onToggle, onEdit, onDelete })),
+      visibleTasks.map((task) =>
+        createTaskItem(task, { onToggle, onEdit, onDelete, onMove, reorderable }),
+      ),
     );
 
     const completed = allTasks.filter((task) => task.completed).length;

@@ -8,6 +8,7 @@ import { createToastController } from './components/toast.js';
 import {
   addTask,
   getTasks,
+  moveTask,
   removeCompletedTasks,
   removeTask,
   restoreTasks,
@@ -58,6 +59,11 @@ export function createApp() {
           toast.show({ message: 'Задача восстановлена' });
         },
       });
+    },
+    onMove(draggedId, targetId, { after }) {
+      if (moveTask(draggedId, targetId, { after })) {
+        announce('Порядок задач обновлён');
+      }
     },
   });
   const footer = createAppFooter();
@@ -141,7 +147,9 @@ export function createApp() {
   }
 
   function render(tasks) {
-    taskList.render(getVisibleTasks(tasks), tasks);
+    taskList.render(getVisibleTasks(tasks), tasks, {
+      reorderable: view.sort === 'manual',
+    });
     hero.update({
       total: tasks.length,
       completed: tasks.filter((task) => task.completed).length,

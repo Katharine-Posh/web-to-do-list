@@ -1,3 +1,5 @@
+import { createApp } from './js/app.js';
+
 const STYLESHEET_URL = './styles/main.css';
 
 const FAVICON_SVG = `
@@ -33,20 +35,13 @@ function appendFavicon(svg) {
   document.head.append(link);
 }
 
-function createBootScreen() {
+function showFatalError(error) {
+  console.error(error);
+
   const main = document.createElement('main');
-  main.className = 'boot-screen';
-
-  const mark = document.createElement('span');
-  mark.className = 'boot-screen__mark';
-  mark.setAttribute('aria-hidden', 'true');
-
-  const label = document.createElement('p');
-  label.className = 'boot-screen__label';
-  label.textContent = 'Focus — загрузка…';
-
-  main.append(mark, label);
-  return main;
+  main.className = 'fatal-error';
+  main.textContent = 'Не удалось загрузить приложение. Обновите страницу.';
+  document.body.replaceChildren(main);
 }
 
 async function bootstrap() {
@@ -56,7 +51,9 @@ async function bootstrap() {
   appendFavicon(FAVICON_SVG);
   await appendStylesheet(STYLESHEET_URL);
 
-  document.body.replaceChildren(createBootScreen());
+  const app = createApp();
+  document.body.replaceChildren(app.element);
+  document.body.classList.add('is-ready');
 }
 
-bootstrap();
+bootstrap().catch(showFatalError);

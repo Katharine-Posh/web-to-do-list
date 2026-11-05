@@ -249,6 +249,81 @@ export function createTaskItem(
       });
     });
 
+    let touchState = null;
+
+    function clearTouchIndicator() {
+      touchState?.target?.classList.remove(
+        'task--drop-before',
+        'task--drop-after',
+      );
+    }
+
+    dragHandle.addEventListener('pointerdown', (event) => {
+      if (event.pointerType !== 'touch') {
+        return;
+      }
+
+      event.preventDefault();
+      touchState = { pointerId: event.pointerId, target: null, after: false };
+      element.classList.add('is-dragging');
+
+      try {
+        dragHandle.setPointerCapture(event.pointerId);
+      } catch {
+        // Pointer capture is optional; the drag still works without it.
+      }
+    });
+
+    dragHandle.addEventListener('pointermove', (event) => {
+      if (!touchState || event.pointerId !== touchState.pointerId) {
+        return;
+      }
+
+      const candidate = document
+        .elementFromPoint(event.clientX, event.clientY)
+        ?.closest('.task');
+      const target = candidate && candidate !== element ? candidate : null;
+
+      if (target !== touchState.target) {
+        clearTouchIndicator();
+        touchState.target = target;
+        touchState.after = false;
+      }
+
+      if (!target) {
+        return;
+      }
+
+      const rect = target.getBoundingClientRect();
+      const after = event.clientY > rect.top + rect.height / 2;
+      touchState.after = after;
+      target.classList.toggle('task--drop-before', !after);
+      target.classList.toggle('task--drop-after', after);
+    });
+
+    function finishTouchDrag(event, cancelled) {
+      if (!touchState || event.pointerId !== touchState.pointerId) {
+        return;
+      }
+
+      const { target, after } = touchState;
+      clearTouchIndicator();
+      element.classList.remove('is-dragging');
+      touchState = null;
+
+      if (!cancelled && target && target.dataset.id !== task.id) {
+        onMove(task.id, target.dataset.id, { after });
+      }
+    }
+
+    dragHandle.addEventListener('pointerup', (event) => {
+      finishTouchDrag(event, false);
+    });
+
+    dragHandle.addEventListener('pointercancel', (event) => {
+      finishTouchDrag(event, true);
+    });
+
     element.addEventListener('dragover', (event) => {
       if (element.classList.contains('is-dragging')) {
         return;

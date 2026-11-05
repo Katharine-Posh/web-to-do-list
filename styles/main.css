@@ -174,7 +174,12 @@ svg {
 
 .app-main {
   display: grid;
+  min-width: 0;
   gap: 20px;
+}
+
+.app-main > * {
+  min-width: 0;
 }
 
 .hero {
@@ -788,6 +793,7 @@ kbd {
 
 .task__drag {
   cursor: grab;
+  touch-action: none;
   user-select: none;
 }
 
@@ -932,7 +938,6 @@ kbd {
   height: 6px;
   border-radius: 50%;
   background: var(--color-success);
-  box-shadow: 0 0 10px var(--color-success);
 }
 
 .toast-region {
@@ -995,7 +1000,6 @@ kbd {
   height: 2.75rem;
   border-radius: 0.9rem;
   background: linear-gradient(135deg, var(--color-accent), var(--color-accent-strong));
-  box-shadow: 0 0 2.5rem rgb(139 92 246 / 45%);
   animation: boot-pulse 1.6s ease-in-out infinite;
 }
 
@@ -1241,6 +1245,23 @@ kbd {
 
   .app-footer {
     font-size: 0.72rem;
+  }
+}
+
+@media (hover: none) {
+  .button:hover {
+    transform: none;
+  }
+}
+
+@media (pointer: coarse) {
+  .task__action {
+    width: 34px;
+    height: 34px;
+  }
+
+  .task__actions {
+    gap: 4px;
   }
 }
 

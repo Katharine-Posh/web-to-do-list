@@ -4,7 +4,18 @@ import { createHero } from './components/hero.js';
 import { createComposer } from './components/composer.js';
 import { createTaskList } from './components/task-list.js';
 import { createAppFooter } from './components/app-footer.js';
-import { addTask, getTasks, subscribe, toggleTask } from './store.js';
+import { createToastController } from './components/toast.js';
+import {
+  addTask,
+  getTasks,
+  removeCompletedTasks,
+  removeTask,
+  restoreTasks,
+  subscribe,
+  toggleTask,
+  updateTask,
+} from './store.js';
+import { pluralize } from './utils/format.js';
 
 export function createApp() {
   const header = createAppHeader();
@@ -27,6 +38,27 @@ export function createApp() {
         );
       }
     },
+    onEdit(id, changes) {
+      const updated = updateTask(id, changes);
+      if (updated) {
+        announce(`Задача обновлена: ${updated.title}`);
+      }
+    },
+    onDelete(id) {
+      const removed = removeTask(id);
+      if (!removed) {
+        return;
+      }
+
+      toast.show({
+        message: `Задача удалена: ${removed.task.title}`,
+        actionLabel: 'Отменить',
+        onAction() {
+          restoreTasks([removed]);
+          toast.show({ message: 'Задача восстановлена' });
+        },
+      });
+    },
   });
   const footer = createAppFooter();
 
@@ -41,6 +73,8 @@ export function createApp() {
     id: 'toast-region',
     attrs: { role: 'status', 'aria-live': 'polite', 'aria-atomic': 'true' },
   });
+
+  const toast = createToastController(toastRegion);
 
   const skipLink = el('a', {
     className: 'skip-link',
@@ -67,12 +101,47 @@ export function createApp() {
     liveRegion,
   );
 
+  const view = {
+    filter: 'all',
+    query: '',
+    sort: 'manual',
+  };
+
   function announce(message) {
     liveRegion.textContent = message;
   }
 
+  function getVisibleTasks(tasks) {
+    let visible = tasks;
+
+    if (view.filter === 'active') {
+      visible = visible.filter((task) => !task.completed);
+    } else if (view.filter === 'completed') {
+      visible = visible.filter((task) => task.completed);
+    }
+
+    const query = view.query.trim().toLocaleLowerCase('ru');
+
+    if (query) {
+      visible = visible.filter((task) =>
+        task.title.toLocaleLowerCase('ru').includes(query),
+      );
+    }
+
+    if (view.sort === 'date-asc' || view.sort === 'date-desc') {
+      const direction = view.sort === 'date-asc' ? 1 : -1;
+      const dated = visible.filter((task) => task.dueDate);
+      const undated = visible.filter((task) => !task.dueDate);
+
+      dated.sort((a, b) => direction * a.dueDate.localeCompare(b.dueDate));
+      visible = [...dated, ...undated];
+    }
+
+    return visible;
+  }
+
   function render(tasks) {
-    taskList.render(tasks);
+    taskList.render(getVisibleTasks(tasks), tasks);
     hero.update({
       total: tasks.length,
       completed: tasks.filter((task) => task.completed).length,
@@ -80,8 +149,75 @@ export function createApp() {
     footer.update(tasks);
   }
 
+  function setFilter(filter) {
+    if (view.filter === filter) {
+      return;
+    }
+
+    view.filter = filter;
+
+    for (const [value, button] of taskList.toolbar.filterButtons) {
+      const isActive = value === filter;
+      button.classList.toggle('is-active', isActive);
+      button.setAttribute('aria-pressed', String(isActive));
+    }
+
+    render(getTasks());
+    announce(
+      filter === 'active'
+        ? 'Показаны активные задачи'
+        : filter === 'completed'
+          ? 'Показаны выполненные задачи'
+          : 'Показаны все задачи',
+    );
+  }
+
+  for (const [value, button] of taskList.toolbar.filterButtons) {
+    button.addEventListener('click', () => {
+      setFilter(value);
+    });
+  }
+
+  taskList.toolbar.searchInput.addEventListener('input', () => {
+    view.query = taskList.toolbar.searchInput.value;
+    taskList.toolbar.searchClear.hidden = view.query.length === 0;
+    render(getTasks());
+  });
+
+  taskList.toolbar.searchClear.addEventListener('click', () => {
+    taskList.toolbar.searchInput.value = '';
+    view.query = '';
+    taskList.toolbar.searchClear.hidden = true;
+    taskList.toolbar.searchInput.focus();
+    render(getTasks());
+  });
+
+  taskList.toolbar.sortSelect.addEventListener('change', () => {
+    view.sort = taskList.toolbar.sortSelect.value;
+    render(getTasks());
+    announce(
+      `Сортировка: ${taskList.toolbar.sortSelect.selectedOptions[0].textContent.toLocaleLowerCase('ru')}`,
+    );
+  });
+
   taskList.emptyAction.addEventListener('click', () => {
     composer.titleInput.focus();
+  });
+
+  taskList.clearButton.addEventListener('click', () => {
+    const removed = removeCompletedTasks();
+    if (removed.length === 0) {
+      return;
+    }
+
+    toast.show({
+      message: `Удалено ${removed.length} ${pluralize(removed.length, ['выполненная задача', 'выполненные задачи', 'выполненных задач'])}`,
+      actionLabel: 'Отменить',
+      onAction() {
+        restoreTasks(removed);
+        toast.show({ message: 'Задачи восстановлены' });
+      },
+    });
   });
 
   subscribe(render);

@@ -3,7 +3,7 @@ import { createIcon } from '../icons.js';
 import { createTaskItem } from './task-item.js';
 import { createToolbar } from './toolbar.js';
 
-export function createTaskList({ onToggle } = {}) {
+export function createTaskList({ onToggle, onEdit, onDelete } = {}) {
   const toolbar = createToolbar();
 
   const countBadge = el('span', {
@@ -84,20 +84,24 @@ export function createTaskList({ onToggle } = {}) {
     body,
   );
 
-  function render(tasks) {
+  function render(visibleTasks, allTasks = visibleTasks) {
     clear(list);
     append(
       list,
-      tasks.map((task) => createTaskItem(task, { onToggle })),
+      visibleTasks.map((task) => createTaskItem(task, { onToggle, onEdit, onDelete })),
     );
 
-    const completed = tasks.filter((task) => task.completed).length;
+    const completed = allTasks.filter((task) => task.completed).length;
+    const hasTasks = allTasks.length > 0;
 
-    emptyState.hidden = tasks.length > 0;
-    countBadge.textContent = String(tasks.length);
+    emptyState.hidden = visibleTasks.length > 0;
+    emptyTitle.textContent = hasTasks ? 'Ничего не найдено' : 'Пока пусто';
+    emptyAction.hidden = hasTasks;
+    clearButton.hidden = completed === 0;
+    countBadge.textContent = String(allTasks.length);
     toolbar.updateCounts({
-      all: tasks.length,
-      active: tasks.length - completed,
+      all: allTasks.length,
+      active: allTasks.length - completed,
       completed,
     });
   }

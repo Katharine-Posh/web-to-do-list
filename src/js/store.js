@@ -143,6 +143,85 @@ export function toggleTask(id) {
   commit();
 }
 
+export function removeTask(id) {
+  const index = tasks.findIndex((task) => task.id === id);
+  if (index === -1) {
+    return null;
+  }
+
+  const removed = { task: tasks[index], index };
+  tasks = tasks.filter((task) => task.id !== id);
+  commit();
+  return removed;
+}
+
+export function removeCompletedTasks() {
+  const removed = [];
+
+  tasks.forEach((task, index) => {
+    if (task.completed) {
+      removed.push({ task, index });
+    }
+  });
+
+  if (removed.length === 0) {
+    return [];
+  }
+
+  tasks = tasks.filter((task) => !task.completed);
+  commit();
+  return removed;
+}
+
+export function restoreTasks(entries = []) {
+  if (entries.length === 0) {
+    return;
+  }
+
+  const next = [...tasks];
+
+  for (const { task, index } of [...entries].sort((a, b) => a.index - b.index)) {
+    if (next.some((item) => item.id === task.id)) {
+      continue;
+    }
+
+    next.splice(Math.min(index, next.length), 0, task);
+  }
+
+  tasks = next;
+  commit();
+}
+
+export function updateTask(id, { title, dueDate = null }) {
+  const nextTitle = title.trim().slice(0, 140);
+  if (!nextTitle) {
+    return null;
+  }
+
+  let updated = null;
+
+  tasks = tasks.map((task) => {
+    if (task.id !== id) {
+      return task;
+    }
+
+    updated = {
+      ...task,
+      title: nextTitle,
+      dueDate:
+        typeof dueDate === 'string' && isValidIsoDate(dueDate) ? dueDate : null,
+    };
+
+    return updated;
+  });
+
+  if (updated) {
+    commit();
+  }
+
+  return updated;
+}
+
 window.addEventListener('storage', (event) => {
   if (event.key !== STORAGE_KEY) {
     return;

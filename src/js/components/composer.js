@@ -1,7 +1,7 @@
 import { el } from '../dom.js';
 import { createIcon } from '../icons.js';
 
-export function createComposer() {
+export function createComposer({ onAdd } = {}) {
   const titleInput = el('input', {
     className: 'field__input',
     id: 'task-title',
@@ -81,8 +81,39 @@ export function createComposer() {
     ),
   );
 
+  function showError(message) {
+    errorElement.textContent = message;
+    errorElement.hidden = false;
+    titleInput.setAttribute('aria-invalid', 'true');
+  }
+
+  function clearError() {
+    errorElement.hidden = true;
+    errorElement.textContent = '';
+    titleInput.removeAttribute('aria-invalid');
+  }
+
   form.addEventListener('submit', (event) => {
     event.preventDefault();
+
+    const title = titleInput.value.trim();
+
+    if (!title) {
+      showError('Введите название задачи');
+      titleInput.focus();
+      return;
+    }
+
+    clearError();
+    onAdd?.({ title, dueDate: dateInput.value || null });
+    form.reset();
+    titleInput.focus();
+  });
+
+  titleInput.addEventListener('input', () => {
+    if (!errorElement.hidden) {
+      clearError();
+    }
   });
 
   return {
@@ -92,5 +123,7 @@ export function createComposer() {
     dateInput,
     submitButton,
     errorElement,
+    showError,
+    clearError,
   };
 }

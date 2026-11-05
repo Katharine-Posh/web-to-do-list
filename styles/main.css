@@ -628,6 +628,121 @@ kbd {
   display: none;
 }
 
+.task {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 12px;
+  padding: 13px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  background: var(--color-surface-2);
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.task:hover {
+  border-color: rgb(255 255 255 / 15%);
+}
+
+.task.is-completed {
+  background: rgb(255 255 255 / 2.5%);
+}
+
+.task__check {
+  display: flex;
+  padding-top: 1px;
+  cursor: pointer;
+}
+
+.task__checkbox {
+  display: grid;
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  place-content: center;
+  border: 1.5px solid rgb(255 255 255 / 22%);
+  border-radius: 6px;
+  outline: none;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.task__checkbox::before {
+  content: "";
+  width: 9px;
+  height: 5px;
+  border-bottom: 2px solid #fff;
+  border-left: 2px solid #fff;
+  transform: rotate(-45deg) scale(0);
+  transition: transform 0.15s ease;
+}
+
+.task__checkbox:hover {
+  border-color: rgb(167 139 250 / 65%);
+}
+
+.task__checkbox:checked {
+  border-color: var(--color-accent);
+  background: var(--color-accent);
+}
+
+.task__checkbox:checked::before {
+  transform: rotate(-45deg) scale(1);
+}
+
+.task__checkbox:focus-visible {
+  outline: 2px solid var(--color-accent-2);
+  outline-offset: 2px;
+}
+
+.task__body {
+  display: grid;
+  min-width: 0;
+  gap: 4px;
+}
+
+.task__title {
+  margin: 0;
+  font-size: 0.93rem;
+  font-weight: 600;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.task.is-completed .task__title {
+  color: var(--color-subtle);
+  text-decoration: line-through;
+}
+
+.task__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  color: var(--color-subtle);
+  font-size: 0.75rem;
+}
+
+.task__date {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.task__date--overdue {
+  color: var(--color-danger);
+}
+
+.task__date--empty {
+  color: var(--color-subtle);
+}
+
+.task.is-completed .task__date--overdue {
+  color: var(--color-subtle);
+}
+
 .empty-state {
   display: grid;
   justify-items: center;
@@ -916,6 +1031,11 @@ kbd {
     height: 16px;
     padding: 0 4px;
     font-size: 0.62rem;
+  }
+
+  .task {
+    gap: 10px;
+    padding: 11px 12px;
   }
 
   .empty-state {

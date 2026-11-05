@@ -1,8 +1,9 @@
-import { el } from '../dom.js';
+import { append, clear, el } from '../dom.js';
 import { createIcon } from '../icons.js';
+import { createTaskItem } from './task-item.js';
 import { createToolbar } from './toolbar.js';
 
-export function createTaskList() {
+export function createTaskList({ onToggle } = {}) {
   const toolbar = createToolbar();
 
   const countBadge = el('span', {
@@ -83,6 +84,24 @@ export function createTaskList() {
     body,
   );
 
+  function render(tasks) {
+    clear(list);
+    append(
+      list,
+      tasks.map((task) => createTaskItem(task, { onToggle })),
+    );
+
+    const completed = tasks.filter((task) => task.completed).length;
+
+    emptyState.hidden = tasks.length > 0;
+    countBadge.textContent = String(tasks.length);
+    toolbar.updateCounts({
+      all: tasks.length,
+      active: tasks.length - completed,
+      completed,
+    });
+  }
+
   return {
     element,
     toolbar,
@@ -92,5 +111,6 @@ export function createTaskList() {
     emptyAction,
     countBadge,
     clearButton,
+    render,
   };
 }

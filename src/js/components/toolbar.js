@@ -15,6 +15,7 @@ const SORT_OPTIONS = [
 
 export function createToolbar() {
   const filterButtons = new Map();
+  const filterCounts = new Map();
 
   const filters = el(
     'nav',
@@ -41,6 +42,7 @@ export function createToolbar() {
       );
 
       filterButtons.set(value, button);
+      filterCounts.set(value, count);
       return button;
     }),
   );
@@ -98,11 +100,19 @@ export function createToolbar() {
     el('div', { className: 'toolbar__controls' }, search, sort),
   );
 
+  function updateCounts({ all = 0, active = 0, completed = 0 }) {
+    filterCounts.get('all').textContent = String(all);
+    filterCounts.get('active').textContent = String(active);
+    filterCounts.get('completed').textContent = String(completed);
+  }
+
   return {
     element,
     filterButtons,
+    filterCounts,
     searchInput,
     searchClear,
     sortSelect,
+    updateCounts,
   };
 }

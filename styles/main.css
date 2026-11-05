@@ -185,12 +185,17 @@ svg {
   padding: 16px 0 6px;
 }
 
+.hero__copy {
+  min-width: 0;
+}
+
 .hero__title {
   margin: 0;
   font-size: clamp(2.4rem, 5vw, 4rem);
   font-weight: 800;
   letter-spacing: -0.045em;
   line-height: 1.02;
+  text-wrap: balance;
 }
 
 .hero__title-mark {
@@ -198,6 +203,7 @@ svg {
 }
 
 .progress-card {
+  min-width: 0;
   padding: 18px;
   border: 1px solid var(--color-border);
   border-radius: 18px;
@@ -222,6 +228,7 @@ svg {
 .progress-card__value {
   font-size: 1.5rem;
   font-weight: 700;
+  font-variant-numeric: tabular-nums;
   letter-spacing: -0.03em;
 }
 
@@ -266,6 +273,7 @@ svg {
 
 .field {
   position: relative;
+  min-width: 0;
 }
 
 .field__icon {
@@ -280,6 +288,7 @@ svg {
 
 .field__input {
   width: 100%;
+  min-width: 0;
   height: 52px;
   padding: 0 16px 0 46px;
   border: 1px solid var(--color-border);
@@ -416,6 +425,7 @@ kbd {
   background: rgb(139 92 246 / 14%);
   color: var(--color-accent-2);
   font-size: 0.74rem;
+  font-variant-numeric: tabular-nums;
   font-weight: 700;
 }
 
@@ -431,6 +441,7 @@ kbd {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+  row-gap: 10px;
 }
 
 .filters {
@@ -478,6 +489,7 @@ kbd {
   background: rgb(255 255 255 / 6%);
   color: var(--color-muted);
   font-size: 0.68rem;
+  font-variant-numeric: tabular-nums;
 }
 
 .filter.is-active .filter__count {
@@ -489,11 +501,13 @@ kbd {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+  min-width: 0;
 }
 
 .search {
   position: relative;
   display: flex;
+  min-width: 0;
   align-items: center;
 }
 
@@ -507,6 +521,7 @@ kbd {
 
 .search__input {
   width: 220px;
+  min-width: 0;
   height: 40px;
   padding: 0 36px;
   border: 1px solid var(--color-border);
@@ -552,6 +567,7 @@ kbd {
 .sort {
   position: relative;
   display: flex;
+  min-width: 0;
   align-items: center;
 }
 
@@ -564,6 +580,8 @@ kbd {
 }
 
 .sort__select {
+  width: 100%;
+  min-width: 0;
   height: 40px;
   padding: 0 34px 0 36px;
   border: 1px solid var(--color-border);
@@ -614,7 +632,7 @@ kbd {
   display: grid;
   justify-items: center;
   gap: 10px;
-  padding: 48px 20px;
+  padding: 42px 20px;
   border: 1px dashed rgb(255 255 255 / 12%);
   border-radius: var(--radius-md);
   background: rgb(255 255 255 / 1.5%);
@@ -650,7 +668,7 @@ kbd {
 .app-footer {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 16px;
   padding: 0 4px 8px;
   color: var(--color-muted);
@@ -728,9 +746,13 @@ kbd {
 
 @media (max-width: 860px) {
   .hero {
-    grid-template-columns: 1fr;
-    gap: 20px;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 18px;
     align-items: start;
+  }
+
+  .progress-card {
+    width: 100%;
   }
 
   .composer__form {
@@ -752,15 +774,22 @@ kbd {
 
   .app-header {
     flex-wrap: wrap;
+    gap: 14px;
   }
 
   .app-header__meta {
     width: 100%;
+    flex-wrap: wrap;
     justify-content: space-between;
+    gap: 10px;
   }
 
   .app-header__date {
     font-size: 0.78rem;
+  }
+
+  .hero {
+    gap: 16px;
   }
 
   .hero__title {
@@ -768,17 +797,24 @@ kbd {
   }
 
   .composer__form {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 
-  .toolbar,
+  .toolbar {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
   .toolbar__controls {
     width: 100%;
+    flex-direction: column;
   }
 
   .search,
   .sort {
-    flex: 1;
+    width: 100%;
+    flex: none;
   }
 
   .search__input,
@@ -788,10 +824,17 @@ kbd {
 
   .filters {
     width: 100%;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .filters::-webkit-scrollbar {
+    display: none;
   }
 
   .filter {
-    flex: 1;
+    flex: 1 0 auto;
     justify-content: center;
   }
 
@@ -800,23 +843,92 @@ kbd {
   }
 
   .tasks__head {
-    align-items: flex-start;
+    align-items: center;
   }
 
   .tasks__clear .button__label {
     display: none;
   }
 
+  .empty-state {
+    padding: 32px 16px;
+  }
+
   .app-footer {
-    flex-direction: column;
     align-items: flex-start;
-    gap: 8px;
   }
 
   .toast-region {
     right: 12px;
     bottom: 12px;
     left: 12px;
+  }
+}
+
+@media (max-width: 420px) {
+  .app {
+    width: calc(100% - 1rem);
+    padding-top: 16px;
+    gap: 16px;
+  }
+
+  .brand__mark {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+  }
+
+  .brand__name {
+    font-size: 1.2rem;
+  }
+
+  .hero__title {
+    font-size: clamp(2rem, 11vw, 2.6rem);
+  }
+
+  .progress-card {
+    padding: 14px;
+  }
+
+  .panel {
+    border-radius: 18px;
+  }
+
+  .composer {
+    padding: 12px;
+  }
+
+  .tasks {
+    padding: 12px;
+  }
+
+  .tasks__title {
+    font-size: 1rem;
+  }
+
+  .filter {
+    padding: 0 8px;
+    font-size: 0.74rem;
+  }
+
+  .filter__count {
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    font-size: 0.62rem;
+  }
+
+  .empty-state {
+    padding: 28px 12px;
+  }
+
+  .empty-state__icon {
+    width: 56px;
+    height: 56px;
+  }
+
+  .app-footer {
+    font-size: 0.72rem;
   }
 }
 

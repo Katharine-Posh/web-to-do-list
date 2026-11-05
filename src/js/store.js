@@ -1,4 +1,7 @@
-let tasks = [];
+const STORAGE_KEY = 'to-do-list.tasks';
+const STORAGE_VERSION = 1;
+const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+
 const listeners = new Set();
 
 function createId() {
@@ -9,10 +12,105 @@ function createId() {
   return `task-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
+function isValidIsoDate(value) {
+  if (!ISO_DATE_PATTERN.test(value)) {
+    return false;
+  }
+
+  const [year, month, day] = value.split('-').map(Number);
+  const date = new Date(year, month - 1, day);
+
+  return (
+    date.getFullYear() === year &&
+    date.getMonth() === month - 1 &&
+    date.getDate() === day
+  );
+}
+
+function sanitizeTask(value) {
+  if (!value || typeof value !== 'object') {
+    return null;
+  }
+
+  const title = typeof value.title === 'string' ? value.title.trim().slice(0, 140) : '';
+  if (!title) {
+    return null;
+  }
+
+  const dueDate =
+    typeof value.dueDate === 'string' && isValidIsoDate(value.dueDate)
+      ? value.dueDate
+      : null;
+
+  return {
+    id: typeof value.id === 'string' && value.id ? value.id : createId(),
+    title,
+    dueDate,
+    completed: value.completed === true,
+    createdAt:
+      typeof value.createdAt === 'string' && !Number.isNaN(Date.parse(value.createdAt))
+        ? value.createdAt
+        : new Date().toISOString(),
+  };
+}
+
+function sanitizeTasks(value) {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  const seenIds = new Set();
+
+  return value
+    .map(sanitizeTask)
+    .filter(Boolean)
+    .map((task) => {
+      if (seenIds.has(task.id)) {
+        return { ...task, id: createId() };
+      }
+
+      seenIds.add(task.id);
+      return task;
+    });
+}
+
+function loadTasks() {
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (!raw) {
+      return [];
+    }
+
+    const parsed = JSON.parse(raw);
+    return sanitizeTasks(Array.isArray(parsed) ? parsed : parsed?.tasks);
+  } catch (error) {
+    console.warn('Не удалось прочитать сохранённые задачи', error);
+    return [];
+  }
+}
+
+function saveTasks() {
+  try {
+    window.localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ version: STORAGE_VERSION, tasks }),
+    );
+  } catch (error) {
+    console.warn('Не удалось сохранить задачи', error);
+  }
+}
+
+let tasks = loadTasks();
+
 function notify() {
   for (const listener of listeners) {
     listener(tasks);
   }
+}
+
+function commit() {
+  saveTasks();
+  notify();
 }
 
 export function getTasks() {
@@ -27,14 +125,14 @@ export function subscribe(listener) {
 export function addTask({ title, dueDate = null }) {
   const task = {
     id: createId(),
-    title: title.trim(),
+    title: title.trim().slice(0, 140),
     dueDate: dueDate || null,
     completed: false,
     createdAt: new Date().toISOString(),
   };
 
   tasks = [...tasks, task];
-  notify();
+  commit();
   return task;
 }
 
@@ -42,5 +140,14 @@ export function toggleTask(id) {
   tasks = tasks.map((task) =>
     task.id === id ? { ...task, completed: !task.completed } : task,
   );
-  notify();
+  commit();
 }
+
+window.addEventListener('storage', (event) => {
+  if (event.key !== STORAGE_KEY) {
+    return;
+  }
+
+  tasks = event.newValue === null ? [] : loadTasks();
+  notify();
+});

@@ -94,7 +94,7 @@ export function createTaskItem(
   const editButton = el(
     'button',
     {
-      className: 'task__action',
+      className: 'task__action task__action--edit',
       type: 'button',
       attrs: { 'aria-label': `Редактировать задачу «${task.title}»`, title: 'Редактировать' },
     },
@@ -124,7 +124,9 @@ export function createTaskItem(
           draggable: true,
           attrs: {
             'aria-label': `Переместить задачу «${task.title}»`,
-            title: 'Перетащить',
+            'aria-describedby': 'drag-hint',
+            'aria-keyshortcuts': 'Alt+ArrowUp Alt+ArrowDown',
+            title: 'Перетащить или Alt + стрелки',
           },
         },
         createIcon('grip', { size: 17 }),
@@ -219,6 +221,32 @@ export function createTaskItem(
     dragHandle.addEventListener('dragend', () => {
       element.classList.remove('is-dragging');
       clearDropIndicator();
+    });
+
+    dragHandle.addEventListener('keydown', (event) => {
+      if (!event.altKey) {
+        return;
+      }
+
+      const direction =
+        event.key === 'ArrowUp' ? -1 : event.key === 'ArrowDown' ? 1 : 0;
+
+      if (direction === 0) {
+        return;
+      }
+
+      const sibling =
+        direction === -1 ? element.previousElementSibling : element.nextElementSibling;
+
+      if (!sibling || !sibling.classList.contains('task')) {
+        return;
+      }
+
+      event.preventDefault();
+      onMove(task.id, sibling.dataset.id, {
+        after: direction === 1,
+        focus: true,
+      });
     });
 
     element.addEventListener('dragover', (event) => {

@@ -54,6 +54,7 @@ export function createToolbar() {
     placeholder: 'Поиск по названию',
     autocomplete: 'off',
     maxLength: 140,
+    attrs: { 'aria-keyshortcuts': '/' },
   });
 
   const searchClear = el(

@@ -13,6 +13,7 @@ export function createComposer({ onAdd } = {}) {
     required: true,
     attrs: {
       'aria-describedby': 'task-form-error',
+      'aria-keyshortcuts': 'n',
     },
   });
 

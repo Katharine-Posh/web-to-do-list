@@ -38,15 +38,21 @@ export function createApp() {
             : `Задача выполнена: ${task.title}`,
         );
       }
+      focusTaskControl(id, '.task__checkbox');
     },
     onEdit(id, changes) {
       const updated = updateTask(id, changes);
       if (updated) {
         announce(`Задача обновлена: ${updated.title}`);
+        focusTaskControl(id, '.task__action--edit');
       }
     },
     onDelete(id) {
+      const allTasks = getTasks();
+      const index = allTasks.findIndex((task) => task.id === id);
+      const neighbor = allTasks[index + 1] ?? allTasks[index - 1] ?? null;
       const removed = removeTask(id);
+
       if (!removed) {
         return;
       }
@@ -57,12 +63,23 @@ export function createApp() {
         onAction() {
           restoreTasks([removed]);
           toast.show({ message: 'Задача восстановлена' });
+          focusTaskControl(removed.task.id, '.task__checkbox');
         },
       });
+
+      if (neighbor) {
+        focusTaskControl(neighbor.id, '.task__checkbox');
+      } else {
+        requestAnimationFrame(focusListFallback);
+      }
     },
-    onMove(draggedId, targetId, { after }) {
+    onMove(draggedId, targetId, { after, focus = false }) {
       if (moveTask(draggedId, targetId, { after })) {
         announce('Порядок задач обновлён');
+
+        if (focus) {
+          focusTaskControl(draggedId, '.task__drag');
+        }
       }
     },
   });
@@ -115,6 +132,36 @@ export function createApp() {
 
   function announce(message) {
     liveRegion.textContent = message;
+  }
+
+  function focusTaskControl(taskId, selector) {
+    requestAnimationFrame(() => {
+      const row = [...taskList.list.children].find(
+        (item) => item.dataset.id === taskId,
+      );
+      const target =
+        row?.querySelector(selector) ??
+        taskList.toolbar.filterButtons.get(view.filter) ??
+        composer.titleInput;
+
+      target.focus();
+    });
+  }
+
+  function focusListFallback() {
+    const target =
+      taskList.list.querySelector('.task__checkbox') ??
+      taskList.toolbar.filterButtons.get(view.filter) ??
+      composer.titleInput;
+
+    target.focus();
+  }
+
+  function isEditableTarget(target) {
+    return (
+      target instanceof Element &&
+      Boolean(target.closest('input, textarea, select, [contenteditable="true"]'))
+    );
   }
 
   function getVisibleTasks(tasks) {
@@ -186,18 +233,84 @@ export function createApp() {
     });
   }
 
+  let searchAnnounceTimer = null;
+
+  function announceSearchResults() {
+    const count = getVisibleTasks(getTasks()).length;
+
+    announce(
+      count === 0
+        ? 'Поиск не дал результатов'
+        : `Найдено ${count} ${pluralize(count, ['задача', 'задачи', 'задач'])}`,
+    );
+  }
+
+  function clearSearch({ silent = false } = {}) {
+    const hadQuery =
+      view.query.length > 0 || taskList.toolbar.searchInput.value.length > 0;
+
+    window.clearTimeout(searchAnnounceTimer);
+    taskList.toolbar.searchInput.value = '';
+    view.query = '';
+    taskList.toolbar.searchClear.hidden = true;
+
+    if (hadQuery) {
+      render(getTasks());
+      if (!silent) {
+        announce('Поиск очищен');
+      }
+    }
+  }
+
   taskList.toolbar.searchInput.addEventListener('input', () => {
     view.query = taskList.toolbar.searchInput.value;
     taskList.toolbar.searchClear.hidden = view.query.length === 0;
     render(getTasks());
+
+    window.clearTimeout(searchAnnounceTimer);
+    searchAnnounceTimer = window.setTimeout(announceSearchResults, 450);
+  });
+
+  taskList.toolbar.searchInput.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      clearSearch();
+      taskList.toolbar.searchInput.focus();
+    }
   });
 
   taskList.toolbar.searchClear.addEventListener('click', () => {
-    taskList.toolbar.searchInput.value = '';
-    view.query = '';
-    taskList.toolbar.searchClear.hidden = true;
+    clearSearch();
     taskList.toolbar.searchInput.focus();
-    render(getTasks());
+  });
+
+  document.addEventListener('keydown', (event) => {
+    if (
+      event.defaultPrevented ||
+      event.ctrlKey ||
+      event.metaKey ||
+      event.altKey ||
+      isEditableTarget(event.target)
+    ) {
+      return;
+    }
+
+    if (event.key === '/') {
+      event.preventDefault();
+      taskList.toolbar.searchInput.focus();
+      return;
+    }
+
+    if (event.key.toLocaleLowerCase('ru') === 'n' || event.key === 'т') {
+      event.preventDefault();
+      composer.titleInput.focus();
+      return;
+    }
+
+    if (event.key === 'Escape' && view.query.length > 0) {
+      event.preventDefault();
+      clearSearch();
+    }
   });
 
   taskList.toolbar.sortSelect.addEventListener('change', () => {
@@ -224,8 +337,11 @@ export function createApp() {
       onAction() {
         restoreTasks(removed);
         toast.show({ message: 'Задачи восстановлены' });
+        focusTaskControl(removed[0].task.id, '.task__checkbox');
       },
     });
+
+    requestAnimationFrame(focusListFallback);
   });
 
   subscribe(render);

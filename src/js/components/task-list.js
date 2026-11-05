@@ -61,6 +61,12 @@ export function createTaskList({ onToggle, onEdit, onDelete, onMove } = {}) {
     emptyAction,
   );
 
+  const dragHint = el('p', {
+    className: 'visually-hidden',
+    id: 'drag-hint',
+    text: 'Перетащите задачу за ручку или используйте Alt со стрелками вверх и вниз, чтобы изменить порядок.',
+  });
+
   const body = el('div', { className: 'tasks__body' }, list, emptyState);
 
   const element = el(
@@ -81,6 +87,7 @@ export function createTaskList({ onToggle, onEdit, onDelete, onMove } = {}) {
       clearButton,
     ),
     toolbar.element,
+    dragHint,
     body,
   );
 

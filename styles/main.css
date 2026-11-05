@@ -1,0 +1,70 @@
+:root {
+  color-scheme: dark;
+  --color-bg: #08070d;
+  --color-text: #f4f1ff;
+  --color-muted: #a29db8;
+  --color-accent: #8b5cf6;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: Inter, "Segoe UI", system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+.boot-screen {
+  display: grid;
+  min-height: 100vh;
+  place-content: center;
+  justify-items: center;
+  gap: 1rem;
+}
+
+.boot-screen__mark {
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 0.9rem;
+  background: linear-gradient(135deg, var(--color-accent), #6d28d9);
+  box-shadow: 0 0 2.5rem rgb(139 92 246 / 45%);
+  animation: boot-pulse 1.6s ease-in-out infinite;
+}
+
+.boot-screen__label {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 0.9rem;
+  letter-spacing: 0.02em;
+}
+
+@keyframes boot-pulse {
+  50% {
+    opacity: 0.55;
+    transform: scale(0.92);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}

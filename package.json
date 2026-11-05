@@ -1,0 +1,14 @@
+{
+  "name": "focus-todo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Focus — dark-themed todo list built with vanilla JavaScript and the DOM API",
+  "type": "module",
+  "scripts": {
+    "start": "node scripts/serve.js",
+    "dev": "node scripts/serve.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
